@@ -1,0 +1,12 @@
+[package]
+name = "steadfast_core"
+version = "0.1.0"
+authors = ["Stephen Ribich <stephen@ribich.dev>"]
+edition = "2018"
+
+[dependencies]
+steadfast_defs = { path = "../steadfast_defs", version = "0.1.0" }
+steadfast_modules = { path = "../steadfast_modules", version = "0.1.0" }
+
+log = "0.4.14"
+thiserror = "1.0.24"

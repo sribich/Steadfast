@@ -1,0 +1,26 @@
+[package]
+name = "steadfast-vulkan"
+version = "0.1.0"
+authors = ["Stephen Ribich <stephen@ribich.dev>"]
+edition = "2018"
+
+
+[dependencies]
+steadfast-std = { path = "../steadfast-std", version = "0.1.0" }
+steadfast-vulkan-shaders = { path = "../steadfast-vulkan-shaders", version = "0.1.0" }
+
+anyhow = "1.0.40"
+thiserror = "1.0.24"
+
+lazy_static = "1.4.0"
+libloading = "0.7.0"
+int-enum = "0.4"
+
+shared_library = "0.1"
+smallvec = "1.6"
+winit = "0.24.0"
+
+log = "0.4.14"
+pretty_env_logger = "0.4.0"
+
+tracing = "0.1.25"

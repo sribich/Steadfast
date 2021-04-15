@@ -1,0 +1,18 @@
+[package]
+name = "editor"
+version = "0.1.0"
+authors = ["Stephen Ribich <stephen@ribich.dev>"]
+edition = "2018"
+
+[dependencies]
+libloading = "0.7.0"
+
+steadfast_engine = { path = "../../steadfast_engine", version = "0.1.0" }
+
+# winit = "0.24.0"
+# steadfast-vulkan = { path = "../steadfast-vulkan", version = "0.1.0" }
+
+# log = "0.4.14"
+# pretty_env_logger = "0.4.0"
+
+# anyhow = "1.0.40"

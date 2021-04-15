@@ -1,0 +1,5 @@
+[package]
+name = "steadfast_allocator"
+version = "0.1.0"
+authors = ["Stephen Ribich <stephen@ribich.dev>"]
+edition = "2018"

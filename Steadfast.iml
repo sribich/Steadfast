@@ -4,8 +4,24 @@
     <exclude-output />
     <content url="file://$MODULE_DIR$">
       <sourceFolder url="file://$MODULE_DIR$/Cargo/src" isTestSource="false" />
-      <sourceFolder url="file://$MODULE_DIR$/editor/src" isTestSource="false" />
-      <sourceFolder url="file://$MODULE_DIR$/steadfast-vulkan/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/old/editor/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/old/steadfast-vulkan/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/old/steadfast-std/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/old/steadfast-vulkan-shaders/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/old/steadfast-vulkan2/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/game/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/old/steadfast-engine-core/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/old/steadfast-engine-physics/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/old/steadfast-engine-render/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/old/steadfast-game/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/old/steadfast-window/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/steadfast_engine/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/steadfast_allocator/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/steadfast_core/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/steadfast_defs/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/steadfast_modules/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/steadfast_modules_impl/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/steadfast_runtime/src" isTestSource="false" />
       <excludeFolder url="file://$MODULE_DIR$/target" />
       <excludeFolder url="file://$MODULE_DIR$/Cargo/target" />
     </content>

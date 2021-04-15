@@ -1,0 +1,9 @@
+[package]
+name = "steadfast_engine"
+version = "0.1.0"
+authors = ["Stephen Ribich <stephen@ribich.dev>"]
+edition = "2018"
+
+[lib]
+name = "libengine"
+crate-type = ["rlib", "dylib"]

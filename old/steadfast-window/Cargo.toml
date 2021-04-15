@@ -1,0 +1,8 @@
+[package]
+name = "steadfast-window"
+version = "0.1.0"
+authors = ["Stephen Ribich <stephen@ribich.dev>"]
+edition = "2018"
+
+[dependencies]
+winit = "0.24.0"

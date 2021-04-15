@@ -1,0 +1,13 @@
+[package]
+name = "game"
+version = "0.1.0"
+authors = ["Stephen Ribich <stephen@ribich.dev>"]
+edition = "2018"
+
+[lib]
+name = "libgame"
+crate-type = ["dylib"]
+
+[dependencies]
+steadfast_core = { path = "../steadfast_core", version = "0.1.0" }
+steadfast_runtime = { path = "../steadfast_runtime", version = "0.1.0" }

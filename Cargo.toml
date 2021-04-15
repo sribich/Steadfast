@@ -1,9 +1,10 @@
 [workspace]
 members = [
-    "editor",
-    "steadfast-vulkan"
-]
-default-members = [
-    "editor",
-    "steadfast-vulkan"
+    "game",
+    "steadfast_allocator",
+    "steadfast_core",
+    "steadfast_defs",
+    "steadfast_engine",
+    "steadfast_modules",
+    "steadfast_runtime"
 ]

@@ -1,0 +1,12 @@
+[package]
+name = "steadfast_runtime"
+version = "0.1.0"
+authors = ["Stephen Ribich <stephen@ribich.dev>"]
+edition = "2018"
+
+[dependencies]
+steadfast_allocator = { path = "../steadfast_allocator", version = "0.1.0" }
+steadfast_core = { path = "../steadfast_core", version = "0.1.0" }
+
+tracing = "0.1.25"
+tracing-subscriber = "0.2.17"

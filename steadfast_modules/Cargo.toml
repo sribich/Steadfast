@@ -1,0 +1,10 @@
+[package]
+name = "steadfast_modules"
+version = "0.1.0"
+authors = ["Stephen Ribich <stephen@ribich.dev>"]
+edition = "2018"
+
+[dependencies]
+libloading = "0.7.0"
+notify = "4.0.12"
+thiserror = "1.0.24"
