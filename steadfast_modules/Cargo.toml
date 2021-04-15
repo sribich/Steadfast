@@ -5,6 +5,8 @@ authors = ["Stephen Ribich <stephen@ribich.dev>"]
 edition = "2018"
 
 [dependencies]
+steadfast_defs = { path = "../steadfast_defs", version = "0.1.0" }
+
 libloading = "0.7.0"
 notify = "4.0.12"
 thiserror = "1.0.24"

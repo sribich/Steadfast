@@ -422,13 +422,13 @@ dependencies = [
 [[package]]
 name = "steadfast_defs"
 version = "0.1.0"
-dependencies = [
- "steadfast_modules",
-]
 
 [[package]]
 name = "steadfast_engine"
 version = "0.1.0"
+dependencies = [
+ "steadfast_core",
+]
 
 [[package]]
 name = "steadfast_modules"
@@ -436,6 +436,7 @@ version = "0.1.0"
 dependencies = [
  "libloading",
  "notify",
+ "steadfast_defs",
  "thiserror",
 ]
 

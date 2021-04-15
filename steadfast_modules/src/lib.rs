@@ -1,5 +1,12 @@
+mod host;
+mod modules;
+
+pub use crate::host::*;
+pub use crate::modules::*;
+
 use libloading::Library;
 use notify::{watcher, RecommendedWatcher, Watcher};
+use std::fmt::Debug;
 use std::path::Path;
 use std::sync::mpsc::{channel, Receiver};
 use std::time::Duration;
@@ -10,40 +17,51 @@ type Symbol<T> = libloading::os::windows::Symbol<T>;
 #[cfg(not(windows))]
 type Symbol<T> = libloading::unix::windows::Symbol<T>;
 
+/// An opaque pointer to a module's state.
+///
+/// Model state is allocated on the [`Host`] so its'
+/// memory is not freed when we reload the module.
 pub struct State {
     _private: [u8; 0],
 }
 
-pub struct Module<Host, VTable> {
+pub struct Module<VTable: Debug> {
     path: Box<Path>,
-    symbols: Option<Symbols<Host, VTable>>,
-    pub host: Host,
-    state: Vec<u64>,
+    pub symbols: Option<Symbols<VTable>>,
+    pub state: Vec<u64>,
     watcher: RecommendedWatcher,
     rx: Receiver<notify::DebouncedEvent>,
 }
 
-pub struct ModuleAPI<Host, VTable> {
+pub struct ModuleAPI<VTable: Debug> {
     pub size: fn() -> usize,
-    pub init: fn(&mut Host, *mut ()),
-    pub reload: fn(&mut Host, *mut ()) -> VTable,
+    pub init: fn(*mut ()),
+    pub reload: fn(*mut ()) -> VTable,
     pub update: fn(&mut Host, *mut ()),
-    pub unload: fn(&mut Host, *mut ()),
-    pub deinit: fn(&mut Host, *mut ()),
+    pub unload: fn(*mut ()),
+    pub deinit: fn(*mut ()),
 }
 
-pub struct Symbols<Host, VTable> {
+#[derive(Debug)]
+pub struct Symbols<VTable: Debug> {
     pub lib: Library,
-    api: Symbol<*mut ModuleAPI<Host, VTable>>,
+    pub api: Symbol<*mut ModuleAPI<VTable>>,
+    // /// The path from which the library was loaded. This _will_ be a
+    // /// temporary file in windows.
+    // loaded_path: PathBuf,
+
+    // /// The original location of the file. This is the file we watch
+    // /// to know when to reload.
+    // original_path: PathBuf,
 }
 
-impl<Host, VTable> Module<Host, VTable> {
+impl<VTable: Debug> Module<VTable> {
     /// Creates a new library that can be reloaded at runtime
     ///
     /// [`path`] must be a dynamic library containing a `__MODULE`
     /// symbol, created using the [`init_module!`] macro.
     ///
-    pub fn new(path: &'static Path, host: Host) -> Result<Self, Error> {
+    pub fn new(path: &'static Path) -> Result<Self, Error> {
         let symbols = Self::load(path)?;
         let size = (unsafe { &**symbols.api }.size)();
 
@@ -54,24 +72,19 @@ impl<Host, VTable> Module<Host, VTable> {
         let mut module = Module {
             path: path.with_extension("dll").into_boxed_path(),
             state: vec![],
-            symbols: Some(symbols),
+            symbols: None,
             watcher,
             rx,
-            host,
         };
 
         module.resize_state(size);
 
-        if let Some(Symbols { ref mut api, .. }) = module.symbols {
-            (unsafe { &***api }.init)(&mut module.host, Self::get_state(&mut module.state));
-        }
-
-        module.symbols = None;
+        (unsafe { &**symbols.api }.init)(Self::get_state(&mut module.state));
 
         Ok(module)
     }
 
-    pub fn reload(&mut self) -> Result<Option<&Symbols<Host, VTable>>, Error> {
+    pub fn reload(&mut self) -> Result<Option<&Symbols<VTable>>, Error> {
         let mut reload = false;
 
         while let Ok(event) = self.rx.try_recv() {
@@ -94,9 +107,9 @@ impl<Host, VTable> Module<Host, VTable> {
         }
     }
 
-    pub fn do_reload(&mut self) -> Result<Option<&Symbols<Host, VTable>>, Error> {
+    pub fn do_reload(&mut self) -> Result<Option<&Symbols<VTable>>, Error> {
         if let Some(Symbols { ref mut api, .. }) = self.symbols {
-            (unsafe { &***api }.unload)(&mut self.host, Self::get_state(&mut self.state));
+            (unsafe { &***api }.unload)(Self::get_state(&mut self.state));
         }
 
         self.symbols = None;
@@ -106,7 +119,7 @@ impl<Host, VTable> Module<Host, VTable> {
         self.resize_state((unsafe { &**symbols.api }.size)());
 
         // TODO: Load module vtable
-        (unsafe { &**symbols.api }.reload)(&mut self.host, Self::get_state(&mut self.state));
+        (unsafe { &**symbols.api }.reload)(Self::get_state(&mut self.state));
         self.symbols = Some(symbols);
 
         if let Some(symbols) = &self.symbols {
@@ -116,16 +129,22 @@ impl<Host, VTable> Module<Host, VTable> {
         }
     }
 
+    pub fn update(&mut self, host: &mut Host) -> () {
+        if let Some(Symbols { ref mut api, .. }) = self.symbols {
+            (unsafe { &***api }.update)(host, Self::get_state(&mut self.state));
+        }
+    }
+
     fn resize_state(&mut self, size: usize) {
         self.state.resize((size + 7) / 8, 0);
     }
 
-    fn get_state(buffer: &mut Vec<u64>) -> *mut () {
+    pub fn get_state(buffer: &mut Vec<u64>) -> *mut () {
         buffer.as_mut_ptr() as *mut ()
     }
 
     #[cfg(windows)]
-    fn load(path: &Path) -> Result<Symbols<Host, VTable>, Error> {
+    fn load(path: &Path) -> Result<Symbols<VTable>, Error> {
         let path_extension = path.with_extension("dll");
         let path_copied = path_extension.with_extension("copy.dll");
 
@@ -140,15 +159,28 @@ impl<Host, VTable> Module<Host, VTable> {
     }
 }
 
-impl<Host, VTable> Symbols<Host, VTable> {
+impl<VTable: Debug> Symbols<VTable>
+where
+    VTable: Debug,
+{
     fn new(path: &Path) -> Result<Self, Error> {
         unsafe {
             let library = Library::new(path)?;
             let api = library
-                .get::<*mut ModuleAPI<Host, VTable>>(b"__MODULE")?
+                .get::<*mut ModuleAPI<VTable>>(b"__MODULE")?
                 .into_raw();
 
             Ok(Symbols { lib: library, api })
+        }
+    }
+}
+
+impl<VTable: Debug> Drop for Module<VTable> {
+    fn drop(&mut self) {
+        if let Some(Symbols { ref mut api, .. }) = self.symbols {
+            unsafe {
+                ((***api).deinit)(Self::get_state(&mut self.state));
+            }
         }
     }
 }
@@ -168,9 +200,8 @@ impl<Host, VTable> Symbols<Host, VTable> {
 #[macro_export]
 macro_rules! init_module {
     (
-        host: $host:ty,
         state: $state:ty,
-        vtable: $vtable:ty,
+        exports: $exports:ty,
         init: $init:ident,
         reload: $reload:ident,
         update: $update:ident,
@@ -181,28 +212,28 @@ macro_rules! init_module {
             unsafe { &mut *(opaque_state as *mut $state) }
         }
 
-        fn __init_module(host: &mut $host, opaque_state: *mut ()) {
-            $init(host, cast(opaque_state))
+        fn __init_module(opaque_state: *mut ()) {
+            $init(cast(opaque_state))
         }
 
-        fn __reload_module(host: &mut $host, opaque_state: *mut ()) -> $vtable {
-            $reload(host, cast(opaque_state))
+        fn __reload_module(opaque_state: *mut ()) -> $exports {
+            $reload(cast(opaque_state))
         }
 
-        fn __update_module(host: &mut $host, opaque_state: *mut ()) {
+        fn __update_module(host: &mut Host, opaque_state: *mut ()) {
             $update(host, cast(opaque_state))
         }
 
-        fn __unload_module(host: &mut $host, opaque_state: *mut ()) {
-            $unload(host, cast(opaque_state))
+        fn __unload_module(opaque_state: *mut ()) {
+            $unload(cast(opaque_state))
         }
 
-        fn __deinit_module(host: &mut $host, opaque_state: *mut ()) {
-            $deinit(host, cast(opaque_state))
+        fn __deinit_module(opaque_state: *mut ()) {
+            $deinit(cast(opaque_state))
         }
 
         #[no_mangle]
-        pub static __MODULE: steadfast_core::module::ModuleAPI<$host, $vtable> =
+        pub static __MODULE: steadfast_core::module::ModuleAPI<$exports> =
             steadfast_core::module::ModuleAPI {
                 size: std::mem::size_of::<$state>,
                 init: __init_module,
@@ -216,30 +247,45 @@ macro_rules! init_module {
 
 #[macro_export]
 macro_rules! load_modules {
-    ($($libname:ident => $vtable:ident,)*) => {
+    ($($libname:ident => $exports:ident,)*) => {
+        use steadfast_core::module::{Host, Module, Symbols};
+        use std::path::Path;
+
         struct ModuleManager {
+            host: Host,
             $(
-                $libname: steadfast_core::module::Module<steadfast_core::def::Host, $vtable>,
+                $libname: Module<$exports>,
             )*
         }
 
         impl ModuleManager {
             pub fn new() -> Self {
                 Self {
+                    host: Host::default(),
                     $(
-                        $libname: steadfast_core::module::Module::new(std::path::Path::new(concat!("../target/debug/", stringify!($libname))), steadfast_core::def::Host::default()).expect("Failed to load libraries"),
+                        $libname: Module::new(
+                            Path::new(concat!("../target/debug/", stringify!($libname)))
+                        ).expect(concat!("Failed to load library ", stringify!($libname))),
                     )*
                 }
             }
 
             pub fn reload(&mut self) -> () {
+                let mut reloaded = false;
                 $(
                     if let Ok(vtable) = self.$libname.reload() {
                         if let Some(symbols) = vtable {
-                            self.$libname.host.$libname = Some($vtable::new(symbols));
+                            reloaded = true;
+                            self.host.$libname = Some($exports::new(symbols));
                         }
                     }
                 )*
+
+                if (reloaded) {
+                    $(
+                        self.$libname.update(&mut self.host);
+                    )*
+                }
             }
         }
     }
@@ -258,3 +304,6 @@ pub enum Error {
     #[error("An error occurred while attempting to load the library")]
     Library(#[from] libloading::Error),
 }
+
+#[cfg(test)]
+mod tests {}

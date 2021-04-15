@@ -1,16 +1,12 @@
 use steadfast_core::def::engine::Application;
-use steadfast_core::def::game::GameVTable;
-use steadfast_core::def::Host;
-use steadfast_core::module::init_module;
+use steadfast_core::module::game::GameExports;
+use steadfast_core::module::{init_module, Host};
 
-struct State {
-    counter: u32,
-}
+struct State {}
 
 init_module! {
-    host: Host,
     state: State,
-    vtable: GameVTable,
+    exports: GameExports,
     init: init,
     reload: reload,
     update: update,
@@ -20,17 +16,17 @@ init_module! {
 
 #[no_mangle]
 fn create_application() -> Application {
-    Application { num: 5 }
+    Application { num: 17 }
 }
 
-fn init(host: &mut Host, state: &mut State) {}
+fn init(_state: &mut State) {}
 
-fn reload(host: &mut Host, state: &mut State) -> GameVTable {
-    GameVTable { create_application }
+fn reload(_state: &mut State) -> GameExports {
+    GameExports { create_application }
 }
 
-fn update(host: &mut Host, state: &mut State) {}
+fn update(_host: &mut Host, _state: &mut State) {}
 
-fn unload(host: &mut Host, state: &mut State) {}
+fn unload(_state: &mut State) {}
 
-fn deinit(host: &mut Host, state: &mut State) {}
+fn deinit(_state: &mut State) {}

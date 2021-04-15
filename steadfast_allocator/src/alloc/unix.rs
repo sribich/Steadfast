@@ -21,7 +21,7 @@ unsafe impl GlobalAlloc for SteadfastAllocator {
     }
 
     #[inline(always)]
-    unsafe fn dealloc(&self, ptr: *mut u8, layout: Layout) {
+    unsafe fn dealloc(&self, ptr: *mut u8, _layout: Layout) {
         free(ptr as *mut c_void)
     }
 
